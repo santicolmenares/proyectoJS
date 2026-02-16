@@ -1,134 +1,233 @@
-const clases = [
-  { id: 1, nombre: "CrossFit", cupo: 3 },
-  { id: 2, nombre: "Funcional", cupo: 2 },
-  { id: 3, nombre: "Spinning", cupo: 1 }
-];
+const STORAGE_KEYS = {
+  CLASES: "mygymbro_clases",
+  INSCRIPCIONES: "mygymbro_inscripciones",
+  USUARIO: "mygymbro_usuario",
+};
 
-let inscripciones = [];
-
-function pedirDato(mensaje) {
-  let dato = prompt(mensaje);
-
-  while (dato === "" || dato === null) {
-    dato = prompt("Dato inválido.\n" + mensaje);
-  }
-
-  return dato;
+function guardarEnStorage(clave, valor) {
+  localStorage.setItem(clave, JSON.stringify(valor));
 }
 
-function mostrarClases(listaClases) {
-  let texto = "CLASES DISPONIBLES:\n\n";
-
-  for (let i = 0; i < listaClases.length; i++) {
-    texto +=
-      listaClases[i].id +
-      ") " +
-      listaClases[i].nombre +
-      " | Cupo: " +
-      listaClases[i].cupo +
-      "\n";
-  }
-
-  alert(texto);
-  console.log(texto);
+function leerDeStorage(clave, valorPorDefecto) {
+  const dato = localStorage.getItem(clave);
+  if (dato === null) return valorPorDefecto;
+  return JSON.parse(dato);
 }
 
-function buscarClase(listaClases, idBuscado) {
-  for (let i = 0; i < listaClases.length; i++) {
-    if (listaClases[i].id === idBuscado) {
-      return listaClases[i];
+function borrarStorageCompleto() {
+  localStorage.removeItem(STORAGE_KEYS.CLASES);
+  localStorage.removeItem(STORAGE_KEYS.INSCRIPCIONES);
+  localStorage.removeItem(STORAGE_KEYS.USUARIO);
+}
+
+function getClasesIniciales() {
+  return [
+    { id: 1, nombre: "CrossFit", cupo: 3 },
+    { id: 2, nombre: "Funcional", cupo: 2 },
+    { id: 3, nombre: "Spinning", cupo: 1 },
+  ];
+}
+
+function crearInscripcion(persona, claseNombre) {
+  return {
+    persona: persona,
+    clase: claseNombre,
+  };
+}
+
+let clases = leerDeStorage(STORAGE_KEYS.CLASES, getClasesIniciales());
+let inscripciones = leerDeStorage(STORAGE_KEYS.INSCRIPCIONES, []);
+let usuarioActual = leerDeStorage(STORAGE_KEYS.USUARIO, "");
+
+const formUsuario = document.querySelector("#form-usuario");
+const inputUsuario = document.querySelector("#input-usuario");
+const usuarioActualEl = document.querySelector("#usuario-actual");
+const msgUsuario = document.querySelector("#msg-usuario");
+
+const salida = document.querySelector("#salida");
+const msgAcciones = document.querySelector("#msg-acciones");
+
+const formInscripcion = document.querySelector("#form-inscripcion");
+const selectClase = document.querySelector("#select-clase");
+const msgInscripcion = document.querySelector("#msg-inscripcion");
+
+function setMensaje(el, texto) {
+  el.textContent = texto;
+}
+
+function renderUsuario() {
+  if (usuarioActual === "") {
+    usuarioActualEl.textContent = "-";
+    return;
+  }
+  usuarioActualEl.textContent = usuarioActual;
+}
+
+function renderSelectClases() {
+  selectClase.innerHTML = "";
+
+  for (const clase of clases) {
+    const option = document.createElement("option");
+    option.value = String(clase.id);
+
+    if (clase.cupo > 0) {
+      option.textContent = `${clase.id}) ${clase.nombre} (Cupo: ${clase.cupo})`;
+    } else {
+      option.textContent = `${clase.id}) ${clase.nombre} (SIN CUPO)`;
     }
+
+    selectClase.appendChild(option);
+  }
+}
+
+function renderClasesEnSalida() {
+  if (clases.length === 0) {
+    salida.innerHTML = `<p class="muted">No hay clases cargadas.</p>`;
+    return;
+  }
+
+  let html = "<ul class='list'>";
+  for (const clase of clases) {
+    html += `<li><strong>${clase.nombre}</strong> — Cupo: ${clase.cupo}</li>`;
+  }
+  html += "</ul>";
+
+  salida.innerHTML = html;
+}
+
+function renderMisInscripcionesEnSalida() {
+  if (usuarioActual === "") {
+    salida.innerHTML = `<p class="muted">Primero guardá tu usuario.</p>`;
+    return;
+  }
+
+  const mias = [];
+  for (const insc of inscripciones) {
+    if (insc.persona === usuarioActual) {
+      mias.push(insc);
+    }
+  }
+
+  if (mias.length === 0) {
+    salida.innerHTML = `<p class="muted">Todavía no tenés inscripciones.</p>`;
+    return;
+  }
+
+  let html = `<p><strong>Inscripciones de ${usuarioActual}:</strong></p><ul class="list">`;
+  for (const insc of mias) {
+    html += `<li>${insc.clase}</li>`;
+  }
+  html += "</ul>";
+
+  salida.innerHTML = html;
+}
+
+function buscarClasePorId(idBuscado) {
+  for (const clase of clases) {
+    if (clase.id === idBuscado) return clase;
   }
   return null;
 }
 
-function inscribir(persona, claseElegida, listaInscripciones) {
-
-  if (claseElegida === null) {
-    alert("No existe una clase con ese ID.");
+function inscribirUsuarioEnClase(idClase) {
+  if (usuarioActual === "") {
+    setMensaje(
+      msgInscripcion,
+      "Primero guardá tu usuario para poder inscribirte.",
+    );
     return;
   }
 
-  if (claseElegida.cupo <= 0) {
-    alert("No hay cupo disponible para " + claseElegida.nombre + ".");
+  const clase = buscarClasePorId(idClase);
+
+  if (clase === null) {
+    setMensaje(msgInscripcion, "No existe una clase con ese ID.");
     return;
   }
 
-  listaInscripciones.push({
-    persona: persona,
-    clase: claseElegida.nombre
-  });
-
-  claseElegida.cupo = claseElegida.cupo - 1;
-
-  alert("¡Listo! " + persona + " se anotó en " + claseElegida.nombre + ".");
-  console.log("Inscripciones:", listaInscripciones);
-}
-
-function verMisInscripciones(persona, listaInscripciones) {
-  let texto = "INSCRIPCIONES DE " + persona + ":\n\n";
-  let tiene = false;
-
-  for (let i = 0; i < listaInscripciones.length; i++) {
-    if (listaInscripciones[i].persona === persona) {
-      texto += "- " + listaInscripciones[i].clase + "\n";
-      tiene = true;
-    }
+  if (clase.cupo <= 0) {
+    setMensaje(msgInscripcion, `No hay cupo disponible para ${clase.nombre}.`);
+    return;
   }
 
-  if (tiene === false) {
-    alert("Todavía no tenés inscripciones.");
-  } else {
-    alert(texto);
-    console.log(texto);
+  inscripciones.push(crearInscripcion(usuarioActual, clase.nombre));
+  clase.cupo = clase.cupo - 1;
+
+  guardarEnStorage(STORAGE_KEYS.INSCRIPCIONES, inscripciones);
+  guardarEnStorage(STORAGE_KEYS.CLASES, clases);
+
+  setMensaje(msgInscripcion, `¡Listo! Te anotaste en ${clase.nombre}.`);
+  renderSelectClases();
+  renderMisInscripcionesEnSalida();
+}
+
+function ejecutarAccion(action) {
+  setMensaje(msgAcciones, "");
+
+  switch (action) {
+    case "VER_CLASES":
+      renderClasesEnSalida();
+      break;
+
+    case "MIS_INSCRIPCIONES":
+      renderMisInscripcionesEnSalida();
+      break;
+
+    case "RESET":
+      borrarStorageCompleto();
+      clases = getClasesIniciales();
+      inscripciones = [];
+      usuarioActual = "";
+
+      renderUsuario();
+      renderSelectClases();
+      salida.innerHTML = `<p class="muted">Datos reseteados. Listo para empezar de nuevo.</p>`;
+
+      setMensaje(msgUsuario, "");
+      setMensaje(msgInscripcion, "");
+      setMensaje(msgAcciones, "Se reseteó todo correctamente.");
+      break;
+
+    default:
+      setMensaje(msgAcciones, "Acción inválida.");
+      break;
   }
 }
 
-alert("Bienvenido a MyGymBro (simulador básico)");
+formUsuario.addEventListener("submit", function (e) {
+  e.preventDefault();
 
-let nombreUsuario = pedirDato("Ingresá tu nombre:");
+  const nombre = inputUsuario.value;
 
-let opcion = parseInt(
-  prompt(
-    "MENÚ\n\n" +
-      "1) Ver clases\n" +
-      "2) Anotarme a una clase\n" +
-      "3) Ver mis inscripciones\n" +
-      "4) Salir\n\n" +
-      "Elegí una opción (1-4):"
-  )
-);
-
-while (opcion !== 4) {
-  if (opcion === 1) {
-    mostrarClases(clases);
-
-  } else if (opcion === 2) {
-    mostrarClases(clases);
-
-    let idElegido = parseInt(pedirDato("Ingresá el ID de la clase a la que querés anotarte:"));
-    let claseEncontrada = buscarClase(clases, idElegido);
-
-    inscribir(nombreUsuario, claseEncontrada, inscripciones);
-
-  } else if (opcion === 3) {
-    verMisInscripciones(nombreUsuario, inscripciones);
-
-  } else {
-    alert("Opción inválida. Elegí 1, 2, 3 o 4.");
+  if (nombre === "") {
+    setMensaje(msgUsuario, "Dato inválido. Escribí tu nombre.");
+    return;
   }
 
-  opcion = parseInt(
-    prompt(
-      "MENÚ\n\n" +
-        "1) Ver clases\n" +
-        "2) Anotarme a una clase\n" +
-        "3) Ver mis inscripciones\n" +
-        "4) Salir\n\n" +
-        "Elegí una opción (1-4):"
-    )
-  );
-}
+  usuarioActual = nombre;
+  guardarEnStorage(STORAGE_KEYS.USUARIO, usuarioActual);
 
-alert("Gracias por usar MyGymBro.");
-console.log("Fin del simulador");
+  inputUsuario.value = "";
+  renderUsuario();
+  setMensaje(msgUsuario, "Usuario guardado.");
+});
+
+document.addEventListener("click", function (e) {
+  const target = e.target;
+
+  if (target.matches("button[data-action]")) {
+    const action = target.getAttribute("data-action");
+    ejecutarAccion(action);
+  }
+});
+
+formInscripcion.addEventListener("submit", function (e) {
+  e.preventDefault();
+
+  const idClase = parseInt(selectClase.value);
+  inscribirUsuarioEnClase(idClase);
+});
+
+renderUsuario();
+renderSelectClases();
+renderClasesEnSalida();
