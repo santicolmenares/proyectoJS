@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MyGymBro - Simulador</title>
+    <link rel="stylesheet" href="./css/style.css" />
+  </head>
+
+  <body>
+    <header class="header">
+      <h1 class="title">MyGymBro</h1>
+      <p class="subtitle">
+        Simulador de inscripciones (DOM + Eventos + Storage)
+      </p>
+    </header>
+
+    <main class="container">
+      <section class="card">
+        <h2 class="card-title">1) Tu usuario</h2>
+
+        <form id="form-usuario" class="form">
+          <label class="label" for="input-usuario">Nombre</label>
+          <input
+            id="input-usuario"
+            class="input"
+            type="text"
+            placeholder="Ej: Santi"
+            autocomplete="off"
+          />
+          <button class="btn" type="submit">Guardar usuario</button>
+        </form>
+
+        <p class="status">
+          Usuario actual:
+          <span id="usuario-actual" class="badge">-</span>
+        </p>
+
+        <p id="msg-usuario" class="msg" aria-live="polite"></p>
+      </section>
+
+      <section class="card">
+        <h2 class="card-title">2) Acciones</h2>
+
+        <div class="actions">
+          <button class="btn" type="button" data-action="VER_CLASES">
+            Ver clases
+          </button>
+
+          <button class="btn" type="button" data-action="MIS_INSCRIPCIONES">
+            Mis inscripciones
+          </button>
+
+          <button class="btn btn-danger" type="button" data-action="RESET">
+            Resetear datos
+          </button>
+        </div>
+
+        <p id="msg-acciones" class="msg" aria-live="polite"></p>
+      </section>
+
+      <section class="card">
+        <h2 class="card-title">3) Anotarme a una clase</h2>
+
+        <form id="form-inscripcion" class="form">
+          <label class="label" for="select-clase">Elegí una clase</label>
+          <select id="select-clase" class="input"></select>
+
+          <button class="btn" type="submit">Anotarme</button>
+        </form>
+
+        <p id="msg-inscripcion" class="msg" aria-live="polite"></p>
+      </section>
+
+      <section class="card">
+        <h2 class="card-title">Salida</h2>
+        <div id="salida" class="output"></div>
+      </section>
+    </main>
+
+    <script src="./js/script.js"></script>
+  </body>
+</html>
